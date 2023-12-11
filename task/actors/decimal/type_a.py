@@ -1,4 +1,4 @@
-"""Задания: десятичные исполнители."""
+"""Задания: десятичные исполнители, тип A."""
 
 from random import randint
 from task import Task
@@ -18,19 +18,19 @@ class TaskActorsDecimalTypeA(Task):
     final_number: int = 10
     """Число, которое должно получиться в результате работы исполнителя по алгоритму."""
 
-    def __init__(self, generate: bool = False) -> object:
-        """Конструктор подходящего примера."""
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
         super().__init__()
         if generate:
             self.generate()
 
     def __generate_raw(self) -> None:
-        """Генерирует задание без проверки."""
+        """Генерация задания без проверки."""
         test_number = randint(10 ** (self.initial_digits - 1), 10 ** self.initial_digits - 1)
         self.final_number = self.actor_function(test_number)
 
     def __generate(self) -> None:
-        """Генерирует задание."""
+        """Генерация задания с проверкой."""
         assert self.solutions_min <= self.solutions_max
         # Критерий проверки: решений не менее указанного количества.
         solutions_count = 0
@@ -41,7 +41,6 @@ class TaskActorsDecimalTypeA(Task):
     def generate(self) -> None:
         """Генерирует параметры условия."""
         self.__generate()
-        self.__generated = True
 
     def solve(self) -> list[int]:
         """Решает задание."""
