@@ -1,8 +1,10 @@
 """Задания: соотнесение таблицы и графа."""
 
-from random import randint, shuffle
 from csv import writer
 from itertools import permutations
+from random import randint, shuffle
+import networkx
+import matplotlib.pyplot
 
 from task import Task
 
@@ -11,14 +13,14 @@ class TaskGraphsMatchTable(Task):
     """Задание: неориентированный граф и таблица истинности с перепутанными строками.
     Соотнести вершины в таблице и в графе."""
 
-    edges: str = "ab ac ad bd be cd cf de eg fg"
-    # Рёбра графа в виде пар вершин, обозначенных буквами (a, b, c...), разделённые пробелами
+    alphabet: str = 'ABCDEFGHIJKLONOPQRSTUVWXYZ'
+    # Алфавит для обозначения вершин
+
+    edges: str = 'AB AC AD BD BE CD CF DE EG FG'
+    # Рёбра графа в виде пар вершин, разделённые пробелами
 
     weighted: bool = True
     # Является ли граф взвешенным
-
-    tries_limit: int = 1000
-    # Число попыток случайной генерации весов рёбер
 
     shuffled_matrix: list[list[int | float]]
     # Перепутанная весовая матрица
@@ -38,8 +40,11 @@ class TaskGraphsMatchTable(Task):
     shuffled_matrix_file_name: str = 'graph.csv'
     # Имя файла для сохранения перепутанной весовой матрицы
 
-    solution_count: int = 1
-    # Требуемое число решений
+    solution_count_min: int = 1
+    # Минимальное требуемое число решений
+
+    solution_count_max: int = 1
+    # Максимальное требуемое число решений
 
     def __init__(self, generate: bool = False):
         """Конструктор."""
@@ -53,26 +58,36 @@ class TaskGraphsMatchTable(Task):
         def make_weights_matrix(matrix: list[list[int]]) -> list[list[int | float]]:
             """Создание весовой матрицы по матрице смежности."""
 
-            def generate_weights(weights_count: int, unique_pair_sums: bool = False):
+            def generate_weights(weights_count: int, unique_pairwise_sums: bool = False):
                 """Генерация весов рёбер так, чтобы и они сами, и их попарные суммы были уникальными."""
-                weight_limit = 1
-                success = False
-                generated_weights = []
-                while not success:
-                    tries_count = 0
-                    while not success and tries_count < self.tries_limit:
-                        tries_count += 1
-                        generated_weights = [randint(1, weight_limit) for _ in range(weights_count)]
-                        success = len(generated_weights) == len(set(generated_weights))
-                        if success and unique_pair_sums:
-                            pair_sums = []
-                            for index1 in range(len(generated_weights)):
-                                for index2 in range(index1 + 1, len(generated_weights)):
-                                    pair_sums.append(generated_weights[index1] + generated_weights[index2])
-                            max_pair_count = len(generated_weights) * (len(generated_weights) - 1) // 2
-                            success = success and len(set(pair_sums)) == max_pair_count
-                    if not success:
-                        weight_limit += 1
+                if weights_count == 0:
+                    return []
+                if unique_pairwise_sums:
+                    # Максимальная разница весов рёбер
+                    weight_max_gap = 2
+                    generated_weights = [randint(1, weight_max_gap)]
+                    weight_to_try = generated_weights[-1] + randint(1, weight_max_gap)
+                    pairwise_sums = set()
+                    for _ in range(weights_count - 1):
+                        sums_are_unique = False
+                        while not sums_are_unique:
+                            sums_are_unique = True
+                            for current_weight in generated_weights:
+                                if (current_weight + weight_to_try) in pairwise_sums:
+                                    sums_are_unique = False
+                                    break
+                            if not sums_are_unique:
+                                weight_to_try += randint(1, weight_max_gap)
+                        for current_weight in generated_weights:
+                            pairwise_sums.add(current_weight + weight_to_try)
+                        generated_weights.append(weight_to_try)
+                else:
+                    # Максимальная разница весов рёбер
+                    weight_max_gap = 5
+                    generated_weights = [randint(1, weight_max_gap)]
+                    for _ in range(weights_count - 1):
+                        generated_weights.append(generated_weights[-1] + randint(1, weight_max_gap))
+                shuffle(generated_weights)
                 return generated_weights
 
             edges_count = 0
@@ -81,7 +96,7 @@ class TaskGraphsMatchTable(Task):
                     if adjacency_matrix[row][col] == 1:
                         edges_count += 1
             if self.weighted:
-                weights = generate_weights(edges_count, unique_pair_sums=len(self.solve_for_weights_sum) > 1)
+                weights = generate_weights(edges_count, unique_pairwise_sums=len(self.solve_for_weights_sum) > 1)
             else:
                 weights = [1] * edges_count
             result = [[float('inf')] * len(matrix) for _ in range(len(matrix))]
@@ -139,7 +154,7 @@ class TaskGraphsMatchTable(Task):
         while not solution_ok:
             self.__generate_raw()
             solution = self.solve()
-            solution_ok = len(solution) == self.solution_count
+            solution_ok = self.solution_count_min <= len(solution) <= self.solution_count_max
         # Запись перепутанной весовой матрицы в файл
         self.write_matrix_to_file(self.shuffled_matrix, self.weighted, self.shuffled_matrix_file_name)
 
@@ -149,7 +164,6 @@ class TaskGraphsMatchTable(Task):
 
     def solve(self) -> set[int | str]:
         """Решение задания."""
-
         edges = self.make_edges_list(self.edges)
         adjacency_matrix = self.make_adjacency_matrix(edges)
         vertices_count = len(self.shuffled_matrix)
@@ -175,43 +189,43 @@ class TaskGraphsMatchTable(Task):
                 if self.solve_for_weights_sum:
                     weights_sum = 0
                     for edge in self.solve_for_weights_sum:
-                        edge = edge.upper()
-                        assert len(edge) == 2 and edge.isalpha()
-                        row = ord(edge[0]) - ord('A')
-                        col = ord(edge[1]) - ord('A')
+                        assert len(edge) == 2 and edge[0] in self.alphabet and edge[1] in self.alphabet
+                        row = self.alphabet.index(edge[0])
+                        col = self.alphabet.index(edge[1])
                         assert row != col and ordered_matrix[row][col] < float('inf')
                         weights_sum += ordered_matrix[row][col]
                     result.add(weights_sum)
                 if self.solve_for_vertices:
                     temp_result = []
-                    for vertex in self.solve_for_vertices.upper():
-                        index = ord(vertex) - ord('A')
+                    for vertex in self.solve_for_vertices:
+                        index = self.alphabet.index(vertex)
                         temp_result.append(permutation.index(index))
                     result.add(''.join(sorted([str(index + 1) for index in temp_result])))
                 if self.solve_for_shortest_distance:
                     shortest_distances = self.make_shortest_distances_matrix(ordered_matrix)
-                    edge = self.solve_for_shortest_distance.upper()
-                    assert len(edge) == 2 and edge.isalpha()
-                    row = ord(edge[0]) - ord('A')
-                    col = ord(edge[1]) - ord('A')
+                    edge = self.solve_for_shortest_distance
+                    assert len(edge) == 2 and edge[0] in self.alphabet and edge[1] in self.alphabet
+                    row = self.alphabet.index(edge[0])
+                    col = self.alphabet.index(edge[1])
                     result.add(shortest_distances[row][col])
         return result
 
     @staticmethod
     def make_edges_list(edges: str):
-        result = edges.upper().split()
+        result = edges.split()
+        alphabet = TaskGraphsMatchTable.alphabet
         for edge in result:
-            assert len(edge) == 2 and edge.isalpha()
+            assert len(edge) == 2 and edge[0] in alphabet and edge[1] in alphabet
         return result
 
     @staticmethod
     def make_matrix_text(matrix: list[list[int | float]], show_numbers: bool, weighted: bool) -> str:
         result = ' ' * 4
         for col in range(len(matrix)):
-            result += f'{f"П{col + 1}": >4}' if show_numbers else f'{chr(ord("A") + col): >4}'
+            result += f'{f"П{col + 1}": >4}' if show_numbers else f'{chr(col): >4}'
         result += '\n'
         for col in range(len(matrix)):
-            result += f'{f"П{col + 1}": >4}' if show_numbers else f'{chr(ord("A") + col): >4}'
+            result += f'{f"П{col + 1}": >4}' if show_numbers else f'{chr(col): >4}'
             if weighted:
                 result += ''.join([f'{item: >4}' if item != float('inf') else f'{"-": >4}' for item in matrix[col]])
             else:
@@ -241,12 +255,14 @@ class TaskGraphsMatchTable(Task):
     def make_adjacency_matrix(edges: list[str]) -> list[list[int]]:
         """Создание матрицы смежности по списку рёбер."""
         vertices_count = 0
+        alphabet = TaskGraphsMatchTable.alphabet
         for edge in edges:
-            vertices_count = max(vertices_count, ord(edge[0]) - ord('A') + 1, ord(edge[1]) - ord('A') + 1)
+            vertices_count = max(vertices_count, alphabet.index(edge[0]) + 1)
+            vertices_count = max(vertices_count, alphabet.index(edge[1]) + 1)
         result = [[0] * vertices_count for _ in range(vertices_count)]
         for edge in edges:
-            row = ord(edge[0]) - ord('A')
-            col = ord(edge[1]) - ord('A')
+            row = alphabet.index(edge[0])
+            col = alphabet.index(edge[1])
             assert row != col and result[row][col] != 1
             result[row][col] = 1
             result[col][row] = 1
@@ -277,7 +293,7 @@ class TaskGraphsMatchTable(Task):
 
     def __repr__(self) -> str:
         """Представление задания."""
-        result = f'Неориентированный граф задан рёбрами: {self.edges.upper()}\n'
+        result = f'Неориентированный граф задан рёбрами: {self.edges}\n'
         if self.weighted:
             result += 'Перепутанная весовая матрица:\n'
         else:
@@ -287,11 +303,58 @@ class TaskGraphsMatchTable(Task):
             result += 'Одно ребро в таблице указано неверно.\n'
         if self.solve_for_weights_sum:
             result += 'Найти ребро или сумму рёбер: '
-            result += f'{", ".join([edge.upper() for edge in self.solve_for_weights_sum])}\n'
+            result += f'{", ".join([edge for edge in self.solve_for_weights_sum])}\n'
         if self.solve_for_vertices:
             result += 'Найти номера вершин, по возрастанию: '
-            result += f'{", ".join([edge.upper() for edge in self.solve_for_vertices])}\n'
+            result += f'{", ".join([edge for edge in self.solve_for_vertices])}\n'
         if self.solve_for_shortest_distance:
-            result += f'Найти кратчайшее расстояние между вершинами: {self.solve_for_shortest_distance.upper()}\n'
+            result += f'Найти кратчайшее расстояние между вершинами: {self.solve_for_shortest_distance}\n'
         result += f'Матрица также сохранена в файле {self.shuffled_matrix_file_name}\n'
         return result
+
+    def draw_graph(self):
+        """Визуализация графа."""
+        graph = networkx.Graph()
+        edges_list = self.edges.split()
+        graph.add_edges_from(edges_list)
+        networkx.draw_networkx(graph)
+        matplotlib.pyplot.show()
+
+    def generate_edges(self, vertices_count: int, additional_edges_count: int):
+        """Генерация связного неориентированного невзвешенного графа."""
+        vertices = list(range(vertices_count))
+        shuffle(vertices)
+        edges = set()
+        for index in range(1, vertices_count):
+            new_edge = None
+            while new_edge is None or new_edge in edges:
+                prev_index = randint(0, index - 1)
+                new_edge = self.alphabet[index] + self.alphabet[prev_index]
+            edges.add(new_edge)
+        for _ in range(additional_edges_count):
+            new_edge = None
+            while new_edge is None or new_edge in edges or new_edge[::-1] in edges or new_edge[0] == new_edge[1]:
+                index1 = randint(0, vertices_count - 1)
+                index2 = randint(0, vertices_count - 1)
+                new_edge = self.alphabet[index1] + self.alphabet[index2]
+            edges.add(new_edge)
+        self.edges = ' '.join(edge for edge in edges)
+
+    def graph_signature(self):
+        """Сигнатура неориентированного графа (учитывает изоморфизм)."""
+        edges_list = self.edges.split()
+        vertices_count = 0
+        alphabet = TaskGraphsMatchTable.alphabet
+        for edge in edges_list:
+            vertices_count = max(vertices_count, alphabet.index(edge[0]) + 1)
+            vertices_count = max(vertices_count, alphabet.index(edge[1]) + 1)
+        alphabet = alphabet[:vertices_count]
+        signature = ' '.join(edges_list)
+        for p in permutations(alphabet):
+            new_edges_list = []
+            for vertex in edges_list:
+                x = p[alphabet.index(vertex[0])]
+                y = p[alphabet.index(vertex[1])]
+                new_edges_list.append(x + y if x < y else y + x)
+            signature = min(signature, ' '.join(sorted(new_edges_list)))
+        return signature
