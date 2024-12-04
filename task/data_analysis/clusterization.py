@@ -1,3 +1,5 @@
+"""Задания: кластеризация."""
+
 from typing import List, Tuple, Callable
 from math import dist, pi, sin, cos, sqrt, log
 from turtle import *

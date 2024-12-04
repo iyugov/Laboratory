@@ -1,3 +1,5 @@
+"""Задания: процессы."""
+
 import csv
 from typing import List, Tuple
 from random import randint, shuffle
