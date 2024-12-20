@@ -3,6 +3,8 @@
 from csv import writer
 from itertools import permutations
 from random import randint, shuffle
+from typing import Tuple
+
 import networkx
 import matplotlib.pyplot
 
@@ -45,6 +47,9 @@ class TaskGraphsMatchTable(Task):
 
     solution_count_max: int = 1
     # Максимальное требуемое число решений
+
+    constraints: Tuple[str] = tuple()
+    # Ограничения на соотношения между весами рёбер (проверяется их конъюнкция)
 
     def __init__(self, generate: bool = False):
         """Конструктор."""
@@ -194,20 +199,23 @@ class TaskGraphsMatchTable(Task):
                         col = self.alphabet.index(edge[1])
                         assert row != col and ordered_matrix[row][col] < float('inf')
                         weights_sum += ordered_matrix[row][col]
-                    result.add(weights_sum)
+                    if self.constraints_satisfied(ordered_matrix, self.constraints):
+                        result.add(weights_sum)
                 if self.solve_for_vertices:
                     temp_result = []
                     for vertex in self.solve_for_vertices:
                         index = self.alphabet.index(vertex)
                         temp_result.append(permutation.index(index))
-                    result.add(''.join(sorted([str(index + 1) for index in temp_result])))
+                    if self.constraints_satisfied(ordered_matrix, self.constraints):
+                        result.add(''.join(sorted([str(index + 1) for index in temp_result])))
                 if self.solve_for_shortest_distance:
                     shortest_distances = self.make_shortest_distances_matrix(ordered_matrix)
                     edge = self.solve_for_shortest_distance
                     assert len(edge) == 2 and edge[0] in self.alphabet and edge[1] in self.alphabet
                     row = self.alphabet.index(edge[0])
                     col = self.alphabet.index(edge[1])
-                    result.add(shortest_distances[row][col])
+                    if self.constraints_satisfied(ordered_matrix, self.constraints):
+                        result.add(shortest_distances[row][col])
         return result
 
     @staticmethod
@@ -290,6 +298,29 @@ class TaskGraphsMatchTable(Task):
                 for j in range(len(matrix)):
                     result[i][j] = min(result[i][j], result[i][k] + result[k][j])
         return result
+
+    @staticmethod
+    def constraints_satisfied(matrix: list[list[int | float]], constraints: Tuple[str]) -> bool:
+        """Проверка выполнения ограничений на веса рёбер."""
+        for constraint in constraints:
+            edge1, sign, edge2 = constraint.split()
+            row1 = TaskGraphsMatchTable.alphabet.index(edge1[0])
+            col1 = TaskGraphsMatchTable.alphabet.index(edge1[1])
+            row2 = TaskGraphsMatchTable.alphabet.index(edge2[0])
+            col2 = TaskGraphsMatchTable.alphabet.index(edge2[1])
+            if sign == '<' and matrix[row1][col1] >= matrix[row2][col2]:
+                return False
+            elif sign == '>' and matrix[row1][col1] <= matrix[row2][col2]:
+                return False
+            elif sign == '=' and matrix[row1][col1] != matrix[row2][col2]:
+                return False
+            elif sign == '!=' and matrix[row1][col1] == matrix[row2][col2]:
+                return False
+            elif sign == '<=' and matrix[row1][col1] > matrix[row2][col2]:
+                return False
+            elif sign == '>=' and matrix[row1][col1] < matrix[row2][col2]:
+                return False
+        return True
 
     def __repr__(self) -> str:
         """Представление задания."""
