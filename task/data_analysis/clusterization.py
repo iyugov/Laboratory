@@ -4,6 +4,7 @@ from typing import List, Tuple, Callable
 from math import dist, pi, sin, cos, sqrt, log
 from turtle import *
 from random import uniform, randint, shuffle, random as rnd
+from general import quantity_form
 
 from task import Task
 
@@ -109,14 +110,6 @@ class TaskClusterization(Task):
 
     def __repr__(self) -> str:
         """Представление задания."""
-        def quantity_form(quantity: int, word_forms: Tuple[str, str, str]) -> str:
-            """Определение формы слова для количественного числительного"""
-            if quantity // 10 % 10 != 1 and quantity == 1:
-                return word_forms[0]
-            elif quantity // 10 % 10 != 1 and 2 <= quantity <= 4:
-                return word_forms[1]
-            else:
-                return word_forms[2]
         word_form = quantity_form(self.clusters_count, ('кластер', 'кластера', 'кластеров'))
         result = f'Выполнить кластеризацию данных на {self.clusters_count} {word_form}.\n'
         result += f'Вычислить среднее арифметическое координат центров кластеров с множителем {self.multiplier}.'

@@ -3,7 +3,6 @@ from truth_table import TaskLogicTruthTableMatchColumnsAndVariables
 
 tasks_count = 100
 file_name = 'tasks.txt'
-file_overwrite = True
 
 # Генерация заданий
 for task_index in range(1, tasks_count + 1):
@@ -17,7 +16,7 @@ for task_index in range(1, tasks_count + 1):
     print(task)
     print(solution)
     print()
-    with open(file_name, 'w' if file_overwrite else 'a') as out_file:
+    with open(file_name, 'a') as out_file:
         out_file.write(str(task_index) + '\n')
         out_file.write(str(task) + '\n')
         out_file.write(str(solution) + '\n\n')
