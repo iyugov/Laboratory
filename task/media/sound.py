@@ -137,7 +137,6 @@ class TaskSoundAlbumFindTransmissionTime(Task):
         transmission_time_int = int(transmission_time)
         result += f'5. Целая часть числа {transmission_time:.5f} равна {transmission_time_int}.\n'
         result += f'Ответ: {transmission_time_int}.'
-
         return result
 
     def __repr__(self) -> str:
