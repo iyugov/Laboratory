@@ -1,8 +1,6 @@
 """Задания: кодирование графической информации."""
 from typing import Tuple, List
 
-from oslo_config.cfg import ListOpt
-
 from task import Task
 
 class TaskImagesConversionAndCompressionFindCompressionPercentage(Task):
@@ -66,7 +64,7 @@ class TaskImagesConversionAndCompressionFindCompressionPercentage(Task):
         """Генерация параметров условия."""
         self.__generate()
 
-    def solve(self) -> float:
+    def solve(self) -> int:
         """Решение задания."""
         mb1, mb2 = self.amount_mb
         dpi1, dpi2 = self.dpi
