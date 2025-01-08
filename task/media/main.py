@@ -1,9 +1,9 @@
 """Применение заданий: кодирование текстовой, графической и звуковой информации, передача информации."""
 
-from sound import TaskSoundAlbumFindTransmissionTime
+from image import TaskImagesBatchFindHeader
 
-task = TaskSoundAlbumFindTransmissionTime(True)
+task = TaskImagesBatchFindHeader(True)
 
 print(task)
 print(task.solve())
-print(task.solution())
+# print(task.solution())
