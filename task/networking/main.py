@@ -1,10 +1,9 @@
 """Применение заданий: десятичные исполнители."""
 
-from ip import TaskIPTwoHostsSameSubnetFindMinHostsWithXBinaryOnes
+from ip import TaskIPSubnetFindNumberOfAddressesWithoutKSameDigitsInARowInLastByte
 
-task = TaskIPTwoHostsSameSubnetFindMinHostsWithXBinaryOnes(True)
+task = TaskIPSubnetFindNumberOfAddressesWithoutKSameDigitsInARowInLastByte(True)
 print(task)
 print(task.solve())
-print(task.solution())
 
 

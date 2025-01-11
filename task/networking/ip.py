@@ -3,6 +3,93 @@
 from task import Task
 from general import quantity_form
 
+
+def ip_to_str(ip: int) -> str:
+    """Преобразование IP-адреса в строку."""
+    return '.'.join([str((ip >> shift) & 0xFF) for shift in [24, 16, 8, 0]])
+
+def subnet_mask_to_ip(mask: int) -> int:
+    return 2**32 - 2**(32 - mask)
+
+class TaskIPSubnetFindNumberOfAddressesWithoutKSameDigitsInARowInLastByte(Task):
+    """Дан хост и маска подсети.
+    Определить количество адресов в этой сети, в двоичном представлении последнего байта которых
+    не более K одинаковых заданных цифр подряд."""
+
+    ip_address: int = 0
+    """IP-адрес хоста."""
+
+    subnet_mask_min: int = 16
+    """Минимальная маска подсети."""
+
+    subnet_mask_max: int = 26
+    """Максимальная маска подсети."""
+
+    subnet_mask: int = 0
+    """Маска подсети."""
+
+    number_of_digits_not_in_a_row: int = 3
+    """Недопустимое количество цифр подряд."""
+
+    digit_not_in_a_row: int = 0
+    """Цифра, которая не должна встречаться в последнем байте адреса определённое число раз подряд."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import randint
+        self.subnet_mask = randint(self.subnet_mask_min, self.subnet_mask_max)
+        ip_ok = False
+        while not ip_ok:
+            ip = 0
+            bits_subnet, bits_host = set(), set()
+            for bit_index in range(32):
+                bit = randint(0, 1)
+                ip = (ip << 1) | bit
+                if bit_index < self.subnet_mask:
+                    bits_subnet.add(bit)
+                else:
+                    bits_host.add(bit)
+            # Проверка на то, что адрес не широковещательный, не является адресом сети и имеет ненулевой старшей байт.
+            ip_ok = len(bits_subnet) == 2 and len(bits_host) == 2 and ip >= 2**24
+        self.ip_address = ip
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        solution_ok = False
+        while not solution_ok:
+            self.__generate_raw()
+            solution_ok = 0 < self.solve() < 2**(32-self.subnet_mask)
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> int:
+        """Решение задания."""
+        from ipaddress import ip_network
+        addresses_count = 0
+        for ip_address in ip_network(f'{ip_to_str(self.ip_address)}/{self.subnet_mask}', False):
+            last_byte = f'{ip_address:b}'[-8:]
+            if str(self.digit_not_in_a_row) * self.number_of_digits_not_in_a_row not in last_byte:
+                addresses_count += 1
+        return addresses_count
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        subnet = ip_to_str(subnet_mask_to_ip(self.subnet_mask))
+        result = f'Адрес и подсеть: {ip_to_str(self.ip_address)}/{subnet} ({self.subnet_mask}).\n'
+        result += f'Определить количество адресов в подсети, в последнем байте двоичного представления которых '
+        result += f'нет {self.number_of_digits_not_in_a_row} стоящих подряд цифр {self.digit_not_in_a_row}.'
+        return result
+
+
+
 class TaskIPTwoHostsSameSubnetFindMinHostsWithXBinaryOnes(Task):
     """Даны IP-адреса двух хостов в одной подсети.
     Определить наименьшее количество адресов в подсети, в которой находятся данные хосты,
@@ -99,9 +186,6 @@ class TaskIPTwoHostsSameSubnetFindMinHostsWithXBinaryOnes(Task):
 
     def __repr__(self) -> str:
         """Представление задания."""
-        def ip_to_str(ip: int) -> str:
-            """Преобразование IP-адреса в строку."""
-            return '.'.join([str((ip >> shift) & 0xFF) for shift in [24, 16, 8, 0]])
         result = f'Даны IP-адреса двух хостов в одной подсети:\n'
         result += f'IP1: {ip_to_str(self.ip1)}\n'
         result += f'IP2: {ip_to_str(self.ip2)}\n'
