@@ -1,7 +1,13 @@
 """Применение заданий: двоичные исполнители."""
 
-from type_b import TaskActorsBinaryTypeB
+from type_c import TaskActorsBinaryTypeC
 
-task = TaskActorsBinaryTypeB(True)
-print(task)
-print(task.solve())
+solution_set = set()
+while True:
+    task = TaskActorsBinaryTypeC(True)
+
+    solution = task.solve()
+    if solution not in solution_set:
+        print(task)
+        print(solution)
+        solution_set.add(solution)
