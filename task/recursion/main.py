@@ -1,8 +1,8 @@
 """Применение заданий: десятичные исполнители."""
 
-from functions_big import TaskRecursionFunctionsBigTypeA
+from functions_big import TaskRecursionFunctionsBigTypeB
 
-task = TaskRecursionFunctionsBigTypeA(True)
+task = TaskRecursionFunctionsBigTypeB(True)
 print(task)
 print(task.solve())
 
