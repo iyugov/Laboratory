@@ -1,14 +1,14 @@
-"""Задания: двоичные исполнители, тип C."""
+"""Задания: двоичные исполнители, тип D."""
 
 from task import Task
 
 
-class TaskActorsBinaryTypeC(Task):
+class TaskActorsBinaryTypeD(Task):
     """Задание: определено преобразование натурального числа N в натуральное число R по следующему правилу:
     1) строится двоичная запись числа N;
-    2) если число N чётное, то в полученной записи удваивается каждая единица, иначе - каждый нуль;
-    3) полученная запись является двоичной записью числа R.
-    Определить максимально возможное число R, не превышающее некоторого ограничения и не равное N."""
+    2) если число N чётное, то все имеющиеся в его двоичной записи нули дублируются справа;
+    3) если число N нечётное, то все имеющиеся в его двоичной записи единицы дублируются слева.
+    Определить минимально возможное число N, для которого результат превышает заданное ограничение."""
 
     initial_number_min: int = 1
     """Минимальное значение исходного числа."""
@@ -42,8 +42,7 @@ class TaskActorsBinaryTypeC(Task):
         while not solution_ok:
             self.__generate_raw()
             solution = self.solve()
-            solution_wrong = self.solve_wrong()
-            solution_ok = 0 < solution < solution_wrong
+            solution_ok = 0 < solution
 
     def generate(self) -> None:
         """Генерирует параметры условия."""
@@ -51,22 +50,11 @@ class TaskActorsBinaryTypeC(Task):
 
     def solve(self) -> int:
         """Решает задание."""
-        result = 0
         for n in range(self.initial_number_min, self.initial_number_max + 1):
             r = self.actor_function(n)
-            if r <= self.target and r != n:
-                result = max(result, r)
-        return result
-
-    def solve_wrong(self) -> int:
-        """Решает задание неверно - без проверки на неравенство R и N."""
-        result = 0
-        result = 0
-        for n in range(self.initial_number_min, self.initial_number_max + 1):
-            r = self.actor_function(n)
-            if r <= self.target:
-                result = max(result, r)
-        return result
+            if r > self.target:
+                return n
+        return 0
 
     def __repr__(self) -> str:
         """Представление задания."""
@@ -79,7 +67,7 @@ class TaskActorsBinaryTypeC(Task):
         """Функция преобразования исполнителя."""
         s = bin(n)[2:]
         if n % 2 == 0:
-            s = s.replace('1', '11')
+            s += '0' * s.count('0')
         else:
-            s = s.replace('0', '00')
+            s = '1' * s.count('1') + s
         return int(s, 2)

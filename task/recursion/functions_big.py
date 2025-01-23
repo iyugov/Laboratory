@@ -1,4 +1,5 @@
 """Рекурсия и рекуррентные соотношения: функции с очень большими результатами."""
+from markdown.test_tools import recursionlimit
 
 from task import Task
 
@@ -56,7 +57,7 @@ class TaskRecursionFunctionsBigTypeA(Task):
         """Генерация параметров условия."""
         self.__generate()
 
-    def solve(self) -> None:
+    def solve(self) -> int:
         """Решение задания."""
         f = [0] * (self.base_argument + 1)
         f[1] = 1
@@ -131,4 +132,78 @@ class TaskRecursionFunctionsBigTypeB(Task):
         result += '  F(N) = 1, если N = 1;\n'
         result += '  F(N) = N + F(N - 1), если N > 1.\n'
         result += f'Определить значение выражения F({self.argument1})-F({self.argument2}).'
+        return result
+
+
+class TaskRecursionFunctionsBigTypeC(Task):
+    """Задана функция от натурального N:
+    F(N) = 1, если N >= T;
+    F(N) = F(n + A) + F(n + B), если N < T.
+    Определить количество различных натуральных чисел в области значений функции."""
+
+    recursion_limit_min: int = 1000
+    """Минимальное значение предела рекурсии."""
+
+    recursion_limit_max: int = 10000
+    """Максимальное значение предела рекурсии."""
+
+    recursion_limit: int = 1000
+    """Предел рекурсии."""
+
+    term_min: int = 2
+    """Минимальное значение слагаемого."""
+
+    term_max: int = 100
+    """Максимальное значение слагаемого."""
+
+    term1: int = 2
+    """Значение первого слагаемого."""
+
+    term2: int = 3
+    """Значение второго слагаемого."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import randint
+        from math import gcd
+        self.recursion_limit = randint(self.recursion_limit_min, self.recursion_limit_max)
+        self.term1 = self.term2 = 1
+        while gcd(self.term1, self.term2) == 1:
+            self.term1 = randint(self.term_min, self.term_max)
+            self.term2 = randint(self.term_min, self.term_max)
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        self.__generate_raw()
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> int:
+        """Решение задания."""
+        from functools import cache
+        unique_results = set()
+        limit = self.recursion_limit + max(self.term1, self.term2)
+        f = [None] * (limit + 1)
+        for n in range(limit, 0, -1):
+            if n >= self.recursion_limit:
+                f[n] = 1
+            else:
+                f[n] = f[n + self.term1] + f[n + self.term2]
+            unique_results.add(f[n])
+        return len(unique_results)
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        result = 'Функция F(N) от натурального N задана соотношениями:\n'
+        result += f'  F(N) = 1, если N >= {self.recursion_limit};\n'
+        result += f'  F(N) = F(N + {self.term1}) + F(N + {self.term2}) в остальных случаях.\n'
+        result += 'Определить количество различных натуральных чисел в области значений функции.'
         return result
