@@ -48,7 +48,12 @@ class TaskCharSequenceTypeA(Task):
         max_length_substring = ''
         for match in finditer(regexp, self.sequence):
             max_length_substring = max(max_length_substring, match.group(0), key=lambda x: len(x))
-        return len(max_length_substring)
+        index = self.sequence.index(max_length_substring)
+        # Отрабатываем возможное перекрытие: AABBBCCDD -> 6 (BBCCDD)
+        if index < 2:
+            return len(max_length_substring)
+        if self.sequence[index - 1] == self.sequence[index - 2]:
+            return len(max_length_substring) + 2
 
     def __repr__(self) -> str:
         """Представление задания."""
@@ -69,7 +74,7 @@ class TaskCharSequenceTypeA(Task):
 class TaskCharSequenceTypeB(Task):
     """Тип B: дана последовательность из десятичных цифр.
     Определить наибольшую длину её непрерывной подпоследовательности, состоящей сначала из не менее чем одной
-    нечётной цифры, затем - не менее чем одной чётной цифры.
+    чётной цифры, затем - не менее чем одной нечётной цифры.
     """
 
     sequence_length_min: int = 900_000
@@ -124,6 +129,7 @@ class TaskCharSequenceTypeB(Task):
         """Чтение последовательности из файла."""
         with open(file_name, 'r') as file_in:
             self.sequence = file_in.readline().strip()
+
 
 class TaskCharSequenceTypeC(Task):
     """Тип C: дана последовательность из цифр и заглавных латинских букв.
@@ -265,6 +271,7 @@ class TaskCharSequenceTypeD(Task):
         """Чтение строки из файла."""
         with open(file_name) as in_file:
             self.string = in_file.readline().strip()
+
 
 class TaskCharSequenceTypeE(Task):
     """Тип E: дана символьная последовательность, состоящая из заглавных латинских букв.

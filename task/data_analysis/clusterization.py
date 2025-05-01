@@ -1,6 +1,6 @@
 """Задания: кластеризация."""
 
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Dict
 from math import dist, pi, sin, cos, sqrt, log
 from turtle import *
 from random import uniform, randint, shuffle, random as rnd
@@ -18,7 +18,11 @@ def normal(mean: float=0, stddev:float=1) -> float:
 class TaskClusterization(Task):
     """Задание: даны координаты точек на плоскости.
     Разбить их на заданное количество кластеров по взаимному расстоянию
-    и определить средние арифметические координат центров кластеров."""
+    и определить:
+    - координаты центров кластеров (сумма расстояний до остальных точек кластера минимальна);
+    - координаты антицентров кластеров (сумма расстояний до остальных точек кластера максимальна);
+    - средние арифметические центров кластеров;
+    - средние арифметические антицентров кластеров."""
 
     center_coordinate_min: float = 0.0
     """Минимальная координата центра дуги кластера."""
@@ -87,13 +91,16 @@ class TaskClusterization(Task):
         """Генерация параметров условия."""
         self.__generate()
 
-    def solve(self) -> Tuple[int, int]:
+    def solve(self) -> Dict[str, Tuple]:
         """Решение задания."""
-        centroids = []
+        centers = []
+        anticenters = []
         clusters = self.clusterize_for_clusters_count()
         cx, cy = 0, 0
+        acx, acy = 0, 0
         for cluster in clusters:
             min_d = float('inf')
+            max_d = float('-inf')
             for x1, y1 in cluster:
                 d = 0.0
                 for x2, y2 in cluster:
@@ -101,12 +108,30 @@ class TaskClusterization(Task):
                 if d < min_d:
                     min_d = d
                     cx, cy = x1, y1
-            centroids.append((cx, cy))
+                if d > max_d:
+                    max_d = d
+                    acx, acy = x1, y1
+            centers.append((cx, cy))
+            anticenters.append((acx, acy))
+        sizes = [len(cluster) for cluster in clusters]
+        centers_multiplied = [(int(x * self.multiplier), int(y * self.multiplier)) for x, y in centers]
+        anticenters_multiplied = [(int(x * self.multiplier), int(y * self.multiplier)) for x, y in anticenters]
+        answer = {'sizes': tuple(sizes), 'centers': tuple(centers), 'anticenters': tuple(anticenters),
+                  'centers_multiplied': tuple(centers_multiplied),
+                  'anticenters_multiplied': tuple(anticenters_multiplied)}
         sx, sy = 0.0, 0.0
-        for x, y in centroids:
+        for x, y in centers:
             sx += x
             sy += y
-        return int(sx / len(centroids) * self.multiplier), int(sy / len(centroids) * self.multiplier)
+        centers_average_multiplied = int(sx / len(anticenters) * self.multiplier), int(sy / len(anticenters) * self.multiplier)
+        answer['centers_average_multiplied'] = centers_average_multiplied
+        sx, sy = 0.0, 0.0
+        for x, y in anticenters:
+            sx += x
+            sy += y
+        anticenters_average_multiplied = int(sx / len(anticenters) * self.multiplier), int(sy / len(anticenters) * self.multiplier)
+        answer['anticenters_average_multiplied'] = anticenters_average_multiplied
+        return answer
 
     def __repr__(self) -> str:
         """Представление задания."""
@@ -170,7 +195,7 @@ class TaskClusterization(Task):
             colors += [colors[-4]]
         up()
         tracer(0)
-        for cluster, cluster_color in zip(clusters, colors):
+        for cluster, cluster_color in zip(clusters, colors * len(clusters)):
             for x, y in cluster:
                 goto(x * scale, y * scale)
                 dot(dot_size, cluster_color)
