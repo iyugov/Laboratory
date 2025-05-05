@@ -123,7 +123,7 @@ class TaskClusterization(Task):
         for x, y in centers:
             sx += x
             sy += y
-        centers_average_multiplied = int(sx / len(anticenters) * self.multiplier), int(sy / len(anticenters) * self.multiplier)
+        centers_average_multiplied = int(sx / len(centers) * self.multiplier), int(sy / len(centers) * self.multiplier)
         answer['centers_average_multiplied'] = centers_average_multiplied
         sx, sy = 0.0, 0.0
         for x, y in anticenters:
