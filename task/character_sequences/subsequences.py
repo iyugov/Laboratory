@@ -383,3 +383,73 @@ class TaskCharSequenceTypeE(Task):
         with open(file_name, 'r') as file_in:
             self.sequence = file_in.readline().strip()
         self.alphabet = ''.join(set(self.sequence))
+
+
+class TaskCharSequenceTypeF(Task):
+    """Тип F: дана символьная последовательность, состоящая из заглавных латинских букв.
+    Определить максимальную длину её непрерывной подпоследовательности, состоящей из строк нескольких видов.
+    Строки могут перекрываться.
+    """
+
+    chunks: Tuple[str] = ('ABA', 'BAB')
+    """Элементы строки."""
+
+    sequence_length_min: int = 900_000
+    """Минимальная длина последовательности."""
+
+    sequence_length_max: int = 1_000_000
+    """Максимальная длина последовательности."""
+
+    sequence: str = ''
+    """Заданная последовательность."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import choice, randint
+        alphabet = tuple(set(''.join(self.chunks)))
+        sequence_length = randint(self.sequence_length_min, self.sequence_length_max)
+        self.sequence = ''.join([choice(alphabet) for _ in range(sequence_length)])
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        self.__generate_raw()
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> int:
+        """Решение задания."""
+        def check(substring: str) -> None:
+            """Проверка подстроки с рекурсивным расширением и обновление ."""
+            nonlocal max_substring
+            if substring in self.sequence:
+                if len(substring) > len(max_substring):
+                    max_substring = substring
+                for chunk in self.chunks:
+                    check(substring + chunk)
+        max_substring = ''
+        check('')
+        return len(max_substring)
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        result = 'Дана символьная последовательность, состоящая из заглавных латинских букв.\n'
+        result += f'Определить максимальную длину её непрерывной подпоследовательности, состоящей из элементов {self.chunks}.'
+        return result
+
+    def write_to_file(self, file_name: str) -> None:
+        """Запись последовательности в файл."""
+        with open(file_name, 'w') as file_out:
+            file_out.write(f'{self.sequence}')
+
+    def read_from_file(self, file_name: str) -> None:
+        """Чтение последовательности из файла."""
+        with open(file_name, 'r') as file_in:
+            self.sequence = file_in.readline().strip()

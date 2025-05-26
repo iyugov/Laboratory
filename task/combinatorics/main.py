@@ -1,7 +1,7 @@
 """Применение заданий: комбинаторика."""
 
-from quantity import TaskCombinatoricsQuantityTypeA
+from quantity import TaskCombinatoricsQuantityTypeB
 
-task = TaskCombinatoricsQuantityTypeA(True)
+task = TaskCombinatoricsQuantityTypeB(True)
 print(task)
 print(task.solve())

@@ -68,7 +68,6 @@ class TaskInfoAmountCompositeDataTypeA(Task):
 
         products_count_ok = True
         products_count = 0
-        bits_per_number = 0
         while products_count_ok:
             products_count += 1
             bits_per_number = len(bin(products_count - 1)[2:])
@@ -85,3 +84,176 @@ class TaskInfoAmountCompositeDataTypeA(Task):
         result += f'Общий объём информации, не более: {self.total_info_amount_kb} Кбайт.\n'
         result += f'Определить максимальное количество изделий в партии.'
         return result
+
+
+class TaskInfoAmountCompositeDataTypeB(Task):
+    """Количество информации, составные расчёты, тип B:
+    Известна длина сообщения, составленного из символов некоторого алфавита. Известно, что для хранения N сообщений
+    необходимо более X килобайт памяти. Определить минимально возможную мощность алфавита."""
+
+    alphabet_length_min: int = 4
+    """Минимальная мощность алфавита."""
+
+    alphabet_length_max: int = 5000
+    """Максимальная мощность алфавита."""
+
+    alphabet_length: int = 26
+    """Мощность алфавита."""
+
+    message_length_min: int = 10
+    """Минимальная длина сообщения."""
+
+    message_length_max: int = 500
+    """Максимальная длина сообщения."""
+
+    message_length: int = 100
+    """Длина сообщения."""
+
+    message_count_min: int = 10
+    """Минимальное количество сообщений."""
+
+    message_count_max: int = 1000
+    """Максимальное количество сообщений."""
+
+    message_count: int = 100
+    """Количество сообщений."""
+
+    total_info_amount_kb_min: int = 100
+    """Минимальный общий объём информации, Кбайт."""
+
+    total_info_amount_kb_max: int = 10_000
+    """Максимальный общий объём информации, Кбайт."""
+
+    total_info_amount_kb: int = 1_000
+    """Общий объём информации, Кбайт."""
+
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import randint
+        self.message_length = randint(self.message_length_min, self.message_length_max)
+        self.message_count = randint(self.message_count_min, self.message_count_max)
+        self.total_info_amount_kb = randint(self.total_info_amount_kb_min, self.total_info_amount_kb_max)
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        solution_ok = False
+        while not solution_ok:
+            self.__generate_raw()
+            solution = self.solve()
+            solution_ok = self.alphabet_length_min <= solution <= self.alphabet_length_max
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> int:
+        """Решение задания."""
+        from math import ceil
+        bits_per_symbol = 1
+        bits_ok = False
+        while not bits_ok:
+            if ceil(self.message_length * bits_per_symbol / 8) * self.message_count > self.total_info_amount_kb * 1024:
+                bits_ok = True
+            else:
+                bits_per_symbol += 1
+        return (1 << (bits_per_symbol - 1)) + 1
+
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        result = f'Длина сообщения: {self.message_length}.\n'
+        result += f'Количество сообщений: {self.message_count}.\n'
+        result += f'Общий объём информации, более: {self.total_info_amount_kb} Кбайт.\n'
+        result += f'Определить минимально возможную мощность алфавита.'
+        return result
+
+
+class TaskInfoAmountCompositeDataTypeC(Task):
+    """Количество информации, составные расчёты, тип C:
+    Известна длина сообщения, составленного из символов некоторого алфавита. Известно, что для хранения N сообщений
+    необходимо не более X килобайт памяти. Определить максимально возможную мощность алфавита."""
+
+    alphabet_length_min: int = 4
+    """Минимальная мощность алфавита."""
+
+    alphabet_length_max: int = 5000
+    """Максимальная мощность алфавита."""
+
+    alphabet_length: int = 26
+    """Мощность алфавита."""
+
+    message_length_min: int = 10
+    """Минимальная длина сообщения."""
+
+    message_length_max: int = 500
+    """Максимальная длина сообщения."""
+
+    message_length: int = 100
+    """Длина сообщения."""
+
+    message_count_min: int = 10
+    """Минимальное количество сообщений."""
+
+    message_count_max: int = 1000
+    """Максимальное количество сообщений."""
+
+    message_count: int = 100
+    """Количество сообщений."""
+
+    total_info_amount_kb_min: int = 100
+    """Минимальный общий объём информации, Кбайт."""
+
+    total_info_amount_kb_max: int = 10_000
+    """Максимальный общий объём информации, Кбайт."""
+
+    total_info_amount_kb: int = 1_000
+    """Общий объём информации, Кбайт."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import randint
+        self.message_length = randint(self.message_length_min, self.message_length_max)
+        self.message_count = randint(self.message_count_min, self.message_count_max)
+        self.total_info_amount_kb = randint(self.total_info_amount_kb_min, self.total_info_amount_kb_max)
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        solution_ok = False
+        while not solution_ok:
+            self.__generate_raw()
+            solution = self.solve()
+            solution_ok = self.alphabet_length_min <= solution <= self.alphabet_length_max
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> int:
+        """Решение задания."""
+        from math import ceil
+        bits_per_symbol = 1
+        while ceil(self.message_length * bits_per_symbol / 8) * self.message_count <= self.total_info_amount_kb * 1024:
+            bits_per_symbol += 1
+        return 1 << (bits_per_symbol - 1)
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        result = f'Длина сообщения: {self.message_length}.\n'
+        result += f'Количество сообщений: {self.message_count}.\n'
+        result += f'Общий объём информации, не более: {self.total_info_amount_kb} Кбайт.\n'
+        result += f'Определить максимально возможную мощность алфавита.'
+        return result
+

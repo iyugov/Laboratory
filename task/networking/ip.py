@@ -234,3 +234,68 @@ class TaskIPTwoHostsSameSubnetFindMinHostsWithXBinaryOnes(Task):
         result += f'(сюда могут быть включены адрес сети и широковещательный адрес).\n'
         result += f'Ответ: {answer}\n'
         return result
+
+
+class TaskIPSubnetFindSubnetIfIPIsNotSpecial(Task):
+    """Дан адрес хоста в сети (не адрес сети и не широковещательный).
+    Определить максимальное число двоичных единиц в маске подсети."""
+
+    ip_address: int = 0
+    """IP-адрес хоста."""
+
+    subnet_mask_min: int = 10
+    """Минимальная маска подсети."""
+
+    subnet_mask_max: int = 28
+    """Максимальная маска подсети."""
+
+    subnet_mask: int = 24
+    """Маска подсети."""
+
+    special_means_broadcast: bool = True
+    """Специальный адрес - широковещательный (или же это адрес сети)."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import randint, choice
+        self.subnet_mask = randint(self.subnet_mask_min, self.subnet_mask_max)
+        self.special_means_broadcast = choice([True, False])
+        ip = randint(0, 2 ** 32 - 1)
+        ip &= (2 ** 32 - 2 ** (32 - self.subnet_mask))
+        if self.special_means_broadcast:
+            ip -= 1
+        self.ip_address = ip
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        solution_ok = False
+        while not solution_ok:
+            self.__generate_raw()
+            solution_ok = 0 < self.solve() < 2**(32-self.subnet_mask)
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> int:
+        """Решение задания."""
+        ip = self.ip_address
+        last_bit = ip % 2
+        last_bits_count = 0
+        while ip % 2 == last_bit:
+            last_bits_count += 1
+            ip >>= 1
+        return 31 - last_bits_count
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        special_type = 'широковещательный адрес' if self.special_means_broadcast else 'адрес сети'
+        result = f'Адрес {ip_to_str(self.ip_address)} в подсети - не {special_type}.\n'
+        result += f'Определить максимальное количество двоичных единиц в маске подсети.\n'
+        return result

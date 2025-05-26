@@ -233,3 +233,130 @@ class TaskImagesConversionAndCompressionFindCompressionPercentage(Task):
         result += f'Изображение №2: {self.dpi[1]} dpi, сжато на X%, {self.amount_mb[1]} Мб.\n'
         result += 'Найти X. Результат округлять до ближайшего целого.'
         return result
+
+class TaskImagesConversionBatchFindSavedSpace(Task):
+    """Задание: даны параметры изображений (разрешение, информационный объём) в двух вариантах.
+    Найти разницу в информационном объёме заданного количества изображений."""
+
+    resolution_base_multipliers: Tuple[int, ...] = (10, 16)
+    """Базовые множители разрешения изображения."""
+
+    aspect_ratios: Tuple[Tuple[int, int], ...] = ((1, 1), (4, 3), (16, 9), (3, 2), (5, 4), (8, 5))
+    """Соотношения сторон изображения."""
+
+    resolution_multiplier_min: int = 5
+    """Минимальное значение множителя для разрешения."""
+
+    resolution_multiplier_max: int = 20
+    """Максимальное значение множителя для разрешения."""
+
+    shrink_factor_min: int = 1
+    """Минимальный коэффициент уменьшения разрешения изображения."""
+
+    shrink_factor_max: int = 10
+    """Максимальный коэффициент уменьшения разрешения изображения."""
+
+    bit_depth_min: int = 4
+    """Минимальная глубина цвета (число бит на пиксель)."""
+
+    bit_depth_max: int = 24
+    """Максимальная глубина цвета (число бит на пиксель)."""
+
+    files_in_batch_min: int = 50
+    """Минимальное число файлов в пакете."""
+
+    files_in_batch_max: int = 500
+    """Максимальное число файлов в пакете."""
+
+    resolution_initial: Tuple[int, int] = (1, 1)
+    """Исходное разрешение изображения (ширина, высота)."""
+
+    bit_depth_initial: int = 1
+    """Исходная глубина цвета (число бит на пиксель)."""
+
+    resolution_final: Tuple[int, int] = (1, 1)
+    """Конечное разрешение изображения (ширина, высота)."""
+
+    bit_depth_final: int = 1
+    """Конечная глубина цвета (число бит на пиксель)."""
+
+    files_in_batch: int = 1
+    """Число файлов в пакете."""
+
+    resolution_min: int = 200
+    """Минимальное разрешение изображения (ширина, высота)."""
+
+    resolution_max: int = 10000
+    """Максимальное разрешение изображения (ширина, высота)."""
+
+    solution_max: int = 1_000_000
+    """Максимальное значение решения."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import randint, choice
+        resolution_base: int = choice(self.resolution_base_multipliers)
+        resolution_multiplier: int = randint(self.resolution_multiplier_min, self.resolution_multiplier_max)
+        resolution_base *= resolution_multiplier
+        aspect_ratio: Tuple[int, int] = choice(self.aspect_ratios)
+        x = aspect_ratio[0] * resolution_base
+        y = aspect_ratio[1] * resolution_base
+        shrink_factor = randint(self.shrink_factor_min, self.shrink_factor_max)
+        self.resolution_final = (x, y)
+        self.resolution_initial = (x * shrink_factor, y * shrink_factor)
+        self.bit_depth_initial = randint(self.bit_depth_min, self.bit_depth_max)
+        self.bit_depth_final = randint(self.bit_depth_min, self.bit_depth_max)
+        self.files_in_batch = randint(self.files_in_batch_min, self.files_in_batch_max)
+
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        solution_ok = False
+        while not solution_ok:
+            self.__generate_raw()
+            solution_ok = True
+            solution_ok &= self.resolution_min <= self.resolution_initial[0] <= self.resolution_max
+            solution_ok &= self.resolution_min <= self.resolution_initial[1] <= self.resolution_max
+            solution_ok &= self.resolution_min <= self.resolution_final[0] <= self.resolution_max
+            solution_ok &= self.resolution_min <= self.resolution_final[1] <= self.resolution_max
+            solution_ok &= self.resolution_initial[0] > self.resolution_final[0]
+            solution_ok &= self.resolution_initial[1] > self.resolution_final[1]
+            solution_ok &= self.bit_depth_initial > self.bit_depth_final
+            solution = self.solve()
+            solution_ok &= solution < self.solution_max
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> int:
+        """Решение задания."""
+        BITS_TO_BYTES = 8
+        BYTES_TO_KB = KB_TO_MB = 1024
+        resolution_initial = self.resolution_initial[0] * self.resolution_initial[1]
+        resolution_final = self.resolution_final[0] * self.resolution_final[1]
+        bit_depth_initial = self.bit_depth_initial
+        bit_depth_final = self.bit_depth_final
+        files_in_batch = self.files_in_batch
+        batch_size_initial = resolution_initial * bit_depth_initial * files_in_batch
+        batch_size_final = resolution_final * bit_depth_final * files_in_batch
+        batch_size_difference = batch_size_initial - batch_size_final
+        batch_size_difference_kb = batch_size_difference // (BITS_TO_BYTES * BYTES_TO_KB)
+        return batch_size_difference_kb
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        result = f'Исходное разрешение: {self.resolution_initial[0]}x{self.resolution_initial[1]}, '
+        result += f'глубина цвета: {self.bit_depth_initial} бит/пиксель.\n'
+        result += f'Конечное разрешение: {self.resolution_final[0]}x{self.resolution_final[1]}, '
+        result += f'глубина цвета: {self.bit_depth_final} бит/пиксель.\n'
+        result += f'Количество файлов в пакете: {self.files_in_batch}.\n'
+        result += 'Определить разницу в информационном объёме пакета изображений. '
+        result += 'Результат округлять до ближайшего целого.'
+        return result

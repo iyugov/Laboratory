@@ -27,7 +27,7 @@ class TaskGraphsMatchTable(Task):
     shuffled_matrix: list[list[int | float]]
     # Перепутанная весовая матрица
 
-    solve_for_weights_sum: tuple[str] = ()
+    solve_for_weights_sum: tuple[str, ...] = ()
     # Что нужно найти: сумма весов конкретных рёбер (в частности, вес одного ребра)
 
     solve_for_vertices: str = ''

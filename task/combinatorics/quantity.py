@@ -82,3 +82,72 @@ class TaskCombinatoricsQuantityTypeA(Task):
         result += f'согласно установленным условиям.'
         return result
 
+class TaskCombinatoricsQuantityTypeB(Task):
+    """Задание: определить количество чисел, имеющих в системе счисления с основанием N ровно K цифр,
+    при этом четные или нечётные цифры не должны повторяться."""
+
+    BASE_MIN: int = 2
+    """Минимальное основание системы счисления."""
+
+    BASE_MAX: int = 10
+    """Максимальное основание системы счисления."""
+
+    base: int = 10
+    """Основание системы счисления."""
+
+    LENGTH_MIN: int = 2
+    """Минимальная длина числа."""
+
+    LENGTH_MAX: int = 6
+    """Максимальная длина числа."""
+
+    length: int = 4
+    """Длина числа."""
+
+    parity_for_unique: int = 1
+    """Чётность для уникальности цифр (0 - чётные, 1 - нечётные)."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import randint
+        self.base = randint(self.BASE_MIN, self.BASE_MAX)
+        self.length = randint(self.LENGTH_MIN, self.LENGTH_MAX)
+        self.parity_for_unique = randint(0, 1)
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        self.__generate_raw()
+        solution_ok = False
+        while not solution_ok:
+            solution = self.solve()
+            solution_ok = solution > 0
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> int:
+        """Решение задания."""
+        from itertools import product
+        count = 0
+        for digits in product(range(self.base), repeat=self.length):
+            if digits[0] == 0:
+                continue
+            parity_digits = [d for d in digits if d % 2 == self.parity_for_unique]
+            if len(parity_digits) != len(set(parity_digits)):
+                continue
+            count += 1
+        return count
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        parity = 'чётные' if self.parity_for_unique == 0 else 'нечётные'
+        result = f'Задание: определить количество чисел в системе счисления с основанием {self.base},\n'
+        result += f'состоящих из {self.length} цифр, при этом {parity} цифры не должны повторяться.'
+        return result
