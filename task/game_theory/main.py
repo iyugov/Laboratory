@@ -1,23 +1,12 @@
 
 from strategy import TaskGameTheoryStrategyStoneHeaps
 
-def next_positions(position):
-    a, b = position
-    result = []
-    for i in range(1, a):
-        result.append((a - i, b))
-    for i in range(1, b):
-        result.append((a, b - i))
-    #for i in range(1, min(a, b)):
-    #    result.append((a - i, b - i))
-    return tuple(result)
-
 task = TaskGameTheoryStrategyStoneHeaps(False)
-task.starting_position = (3, None)
-task.solution_interval = (1, 150)
+task.starting_position = (None, )
+task.solution_interval = (1, 3000)
 task.moves_count_range = (1, 6)
-task.is_won = lambda x: x[0] == x[1] == 1
+task.is_won = lambda x: x[0] <= 64
 task.is_lost = lambda x: False
-task.next_positions = next_positions
+task.next_positions = lambda position: ((position[0] - 3,), (position[0] - 7,), (position[0] // 3, ))
 print(task)
 print(task.solve())

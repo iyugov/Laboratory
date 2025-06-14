@@ -1,10 +1,9 @@
 """Применение заданий: кодирование текстовой, графической и звуковой информации, передача информации."""
 
-from video import TaskVideoFindTransferTime
+from image import TaskImagesBatchInStorages
 
-for _ in range(30):
-    task = TaskVideoFindTransferTime(True)
+for _ in range(10):
+    task = TaskImagesBatchInStorages(True)
     print(task)
     print(task.solve())
-    print('===')
-    print(task.solution())
+    print()

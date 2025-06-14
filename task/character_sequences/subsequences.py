@@ -1,6 +1,7 @@
 """Задания: символьные последовательности, подпоследовательности."""
 from typing import Tuple
 
+from general import quantity_form
 from task import Task
 
 
@@ -442,6 +443,125 @@ class TaskCharSequenceTypeF(Task):
         """Представление задания."""
         result = 'Дана символьная последовательность, состоящая из заглавных латинских букв.\n'
         result += f'Определить максимальную длину её непрерывной подпоследовательности, состоящей из элементов {self.chunks}.'
+        return result
+
+    def write_to_file(self, file_name: str) -> None:
+        """Запись последовательности в файл."""
+        with open(file_name, 'w') as file_out:
+            file_out.write(f'{self.sequence}')
+
+    def read_from_file(self, file_name: str) -> None:
+        """Чтение последовательности из файла."""
+        with open(file_name, 'r') as file_in:
+            self.sequence = file_in.readline().strip()
+
+
+class TaskCharSequenceTypeG(Task):
+    """Тип G: дана символьная последовательность, состоящая из заглавных латинских букв и десятичных цифр.
+    Определить максимальную длину её непрерывной подпоследовательности, содержащей ровно K букв X, начинающуюся
+    (не)чётной цифрой и не содержащей никаких других цифр такой же чётности.
+    """
+
+    sequence_length_min: int = 900_000
+    """Минимальная длина последовательности."""
+
+    sequence_length_max: int = 1_000_000
+    """Максимальная длина последовательности."""
+
+    letter_count_min: int = 10
+    """Минимальное количество букв X."""
+
+    letter_count_max: int = 100
+    """Максимальное количество букв X."""
+
+    letter_count: int = 40
+    """Количество букв X."""
+
+    letter_for_count: str = 'S'
+    """Буква типа X."""
+
+    parity_of_digit: bool = True
+    """Чётность цифры, с которой начинается подстрока."""
+
+    sequence: str = ''
+    """Заданная последовательность."""
+
+    letter_probability_ratio: int = 40
+    """Во сколько раз вероятность нужной буквы больше вероятности других букв."""
+
+    digit_probability_ratio: int = 40
+    """Во сколько раз вероятность цифры неподходящей чётности больше вероятности других цифр."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import choice, choices, randint
+        from string import ascii_uppercase, digits
+        self.parity_of_digit = choice([True, False])
+        letter_probabilities = [(self.letter_probability_ratio if letter == self.letter_for_count else 1) for letter in ascii_uppercase]
+        digit_probabilities = [(self.digit_probability_ratio if (int(digit) % 2 == 0) != self.parity_of_digit else 1) for digit in digits]
+        probabilities = letter_probabilities + digit_probabilities
+        sequence_length = randint(self.sequence_length_min, self.sequence_length_max)
+        self.letter_count = randint(self.letter_count_min, self.letter_count_max)
+        self.letter_for_count = choice(ascii_uppercase)
+        self.sequence = ''.join(choices([x for x in ascii_uppercase + digits], weights=probabilities, k=sequence_length))
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        solution_ok = False
+        while not solution_ok:
+            self.__generate_raw()
+            solution = self.solve()
+            solution_ok = solution > 0
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self, method: str = 'regexp') -> int:
+        """Решение задания."""
+        def solve_by_regexp() -> int:
+            """Решение задания с помощью регулярных выражений."""
+            from re import finditer
+            good_digits = '02468' if self.parity_of_digit else '13579'
+            regexp = rf'[{good_digits}]([^{self.letter_for_count}{good_digits}]*{self.letter_for_count}){{{self.letter_count}}}[^{self.letter_for_count}{good_digits}]*'
+            m = max((p.group(0) for p in finditer(regexp, self.sequence)), key=len, default='')
+            return len(m)
+
+        def solve_by_iteration() -> int:
+            """Решение задания с помощью итерации."""
+            m, c, k = 0, 0, 0
+            good_digits = '02468' if self.parity_of_digit else '13579'
+            for i in range(len(self.sequence)):
+                k += 1
+                if self.sequence[i] in good_digits:
+                    k, c = 1, 0
+                if self.sequence[i] == self.letter_for_count:
+                    c += 1
+                if c > self.letter_count:
+                    k, c = 0, 0
+                if c == self.letter_count:
+                    m = max(m, k)
+            return m
+
+        if method == 'regexp':
+            return solve_by_regexp()
+        elif method == 'iteration':
+            return solve_by_iteration()
+        else:
+            return 0
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        result = 'Дана символьная последовательность, состоящая из заглавных латинских букв.\n'
+        result += f'Определить максимальную длину её непрерывной подпоследовательности,\n'
+        result += f'содержащей ровно {self.letter_count} {quantity_form(self.letter_count, ('букву', 'буквы', 'букв'))} {self.letter_for_count}, начинающуюся '
+        result += f'{"" if self.parity_of_digit else "не"}чётной цифрой и не содержащей никаких других цифр такой же чётности.\n'
         return result
 
     def write_to_file(self, file_name: str) -> None:

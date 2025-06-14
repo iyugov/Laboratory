@@ -1,9 +1,8 @@
 """Применение заданий: перебор чисел."""
 
-from divisors import TaskRangeIterationTypeA
+from divisors import TaskRangeIterationTypeB
 
-task = TaskRangeIterationTypeA(True)
-
+task = TaskRangeIterationTypeB(True)
 print(task)
 solution = task.solve()
 for a, b in solution:

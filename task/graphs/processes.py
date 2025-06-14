@@ -10,18 +10,19 @@ class TaskProcessesLongestSimultaneousWithEarliestCompletion(Task):
     """Задание: даны процессы и их взаимозависимости.
     Определить максимальную продолжительность максимального промежутка времени,
     в течение которого возможно выполнение максимального количества процессов,
-    при условии как можно более раннего завершения выполнения каждого процесса."""
+    при условии как можно более раннего завершения выполнения каждого процесса,
+    и количество выполняющихся процессов на каждой единице времени."""
 
-    processes_count_min: int = 12
+    processes_count_min: int = 20
     """Минимальное число процессов."""
 
-    processes_count_max: int = 15
+    processes_count_max: int = 25
     """Максимальное число процессов."""
 
-    dependencies_overall_count_min: int = 12
+    dependencies_overall_count_min: int = 20
     """Минимальное общее число зависимостей."""
 
-    dependencies_overall_count_max: int = 16
+    dependencies_overall_count_max: int = 30
     """Максимальное общее число зависимостей."""
 
     dependencies_individual_count_max: int = 3
@@ -30,13 +31,13 @@ class TaskProcessesLongestSimultaneousWithEarliestCompletion(Task):
     independent_processes_count_min: int = 1
     """Минимальное число независимых процессов."""
 
-    independent_processes_count_max: int = 3
+    independent_processes_count_max: int = 6
     """Максимальное число независимых процессов."""
 
     process_execution_time_min: int = 1
     """Минимальное время выполнения процесса."""
 
-    process_execution_time_max: int = 15
+    process_execution_time_max: int = 20
     """Максимальное время выполнения процесса."""
 
     solution_min: int = 3
@@ -48,7 +49,7 @@ class TaskProcessesLongestSimultaneousWithEarliestCompletion(Task):
     solution_processes_count_min: int = 4
     """Минимальное значение количества процессов для ответа."""
 
-    solution_processes_count_max: int = 8
+    solution_processes_count_max: int = 12
     """Максимальное значение количества процессов для ответа."""
 
     processes: List[Tuple[int, List[int]]]
@@ -114,7 +115,7 @@ class TaskProcessesLongestSimultaneousWithEarliestCompletion(Task):
         """Генерирует параметры условия."""
         self.__generate()
 
-    def solve(self, get_load=False) -> tuple[int, list[int]] | int:
+    def solve(self, get_load=False) -> Tuple[int, List[int]] | int:
         """Решение задания."""
         def make_execution_periods(starting_process_index: int | Tuple[int, List[int]]) -> None:
             """Создание периодов наиболее раннего исполнения процессов с учётом зависимостей."""

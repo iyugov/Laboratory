@@ -1,10 +1,10 @@
 """Применение заданий: двоичные исполнители."""
 
-from type_d import TaskActorsBinaryTypeD
+from type_e import TaskActorsBinaryTypeE
 
 unique_solutions = set()
 while len(unique_solutions) < 10:
-    task = TaskActorsBinaryTypeD(True)
+    task = TaskActorsBinaryTypeE(True)
     solution = task.solve()
     if solution in unique_solutions:
         continue

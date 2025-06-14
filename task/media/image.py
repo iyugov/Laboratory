@@ -3,6 +3,8 @@ from typing import Tuple, List
 from general import quantity_form
 from task import Task
 
+GB_TO_MB = MB_TO_KB = KB_TO_BYTES = MB_TO_GB = KB_TO_MB = BYTES_TO_KB = 1024
+BITS_TO_BYTES = BYTES_TO_BITS = 8
 
 class TaskImagesBatchFindHeader(Task):
     """Задание: даны параметры изображений (разрешение, число бит на пиксель), количество изображений в пакете
@@ -68,8 +70,6 @@ class TaskImagesBatchFindHeader(Task):
     def __generate_raw(self) -> None:
         """Генерация задания без основной проверки."""
         from random import randint
-        BITS_TO_BYTES = 8
-        BYTES_TO_KB = KB_TO_MB = 1024
         batch_size_kb = 0
         batch_size_is_integer_mb = False
         while not batch_size_is_integer_mb:
@@ -107,8 +107,6 @@ class TaskImagesBatchFindHeader(Task):
 
     def solve(self) -> int:
         """Решение задания."""
-        MB_TO_KB = BYTES_TO_KB = 1024
-        BITS_TO_BYTES = 8
         batch_size_kb = self.batch_size_mb * MB_TO_KB
         image_size_kb = batch_size_kb // self.files_in_batch
         image_size_without_header = self.resolution_x * self.resolution_y * self.bits_per_pixel
@@ -129,8 +127,6 @@ class TaskImagesBatchFindHeader(Task):
 
     def solution(self) -> str:
         """Ход решения."""
-        MB_TO_KB = BYTES_TO_KB = 1024
-        BITS_TO_BYTES = 8
         result = '1. Переведём объём пакета изображений в килобайты:\n'
         batch_size_kb = self.batch_size_mb * MB_TO_KB
         result += f'   {self.batch_size_mb} * {MB_TO_KB} = {batch_size_kb} (Кбайт)\n'
@@ -234,63 +230,47 @@ class TaskImagesConversionAndCompressionFindCompressionPercentage(Task):
         result += 'Найти X. Результат округлять до ближайшего целого.'
         return result
 
-class TaskImagesConversionBatchFindSavedSpace(Task):
-    """Задание: даны параметры изображений (разрешение, информационный объём) в двух вариантах.
-    Найти разницу в информационном объёме заданного количества изображений."""
+class TaskImagesBatchInStorages(Task):
+    """Задание: даны параметры изображений (разрешение, информационный объём) и их количество.
+    Изображения записываются на носители заданного объёма.
+    Определить, сколько носителей потребуется для хранения изображений, а также количество изображений
+    на последнем использованном носителе."""
 
-    resolution_base_multipliers: Tuple[int, ...] = (10, 16)
-    """Базовые множители разрешения изображения."""
+    image_resolutions: Tuple[Tuple[int, int], ...] = (
+        (640, 480), (800, 600), (1024, 768), (1280, 720), (1920, 1080),
+        (2560, 1440), (3840, 2160), (7680, 4320)
+    )
+    """Доступные разрешения изображений."""
 
-    aspect_ratios: Tuple[Tuple[int, int], ...] = ((1, 1), (4, 3), (16, 9), (3, 2), (5, 4), (8, 5))
-    """Соотношения сторон изображения."""
+    image_resolution: Tuple[int, int] = (1024, 768)
+    """Разрешение изображения."""
 
-    resolution_multiplier_min: int = 5
-    """Минимальное значение множителя для разрешения."""
+    image_bits_per_pixel_min: int = 16
+    """Минимальное значение числа бит на пиксель."""
 
-    resolution_multiplier_max: int = 20
-    """Максимальное значение множителя для разрешения."""
+    image_bits_per_pixel_max: int = 32
+    """Максимальное значение числа бит на пиксель."""
 
-    shrink_factor_min: int = 1
-    """Минимальный коэффициент уменьшения разрешения изображения."""
+    image_count_min: int = 1000
+    """Минимальное количество изображений."""
 
-    shrink_factor_max: int = 10
-    """Максимальный коэффициент уменьшения разрешения изображения."""
+    image_count_max: int = 10000
+    """Максимальное количество изображений."""
 
-    bit_depth_min: int = 4
-    """Минимальная глубина цвета (число бит на пиксель)."""
+    image_count: int = 1000
+    """Количество изображений."""
 
-    bit_depth_max: int = 24
-    """Максимальная глубина цвета (число бит на пиксель)."""
+    storage_sizes_gb: Tuple[int, ...] = (4, 8, 16, 32, 64, 128, 256)
+    """Доступные размеры носителей в гигабайтах."""
 
-    files_in_batch_min: int = 50
-    """Минимальное число файлов в пакете."""
+    storage_size_gb: int = 32
+    """Размер носителя в гигабайтах."""
 
-    files_in_batch_max: int = 500
-    """Максимальное число файлов в пакете."""
+    answer_min: int = 10
+    """Минимальное количество носителей в ответе."""
 
-    resolution_initial: Tuple[int, int] = (1, 1)
-    """Исходное разрешение изображения (ширина, высота)."""
-
-    bit_depth_initial: int = 1
-    """Исходная глубина цвета (число бит на пиксель)."""
-
-    resolution_final: Tuple[int, int] = (1, 1)
-    """Конечное разрешение изображения (ширина, высота)."""
-
-    bit_depth_final: int = 1
-    """Конечная глубина цвета (число бит на пиксель)."""
-
-    files_in_batch: int = 1
-    """Число файлов в пакете."""
-
-    resolution_min: int = 200
-    """Минимальное разрешение изображения (ширина, высота)."""
-
-    resolution_max: int = 10000
-    """Максимальное разрешение изображения (ширина, высота)."""
-
-    solution_max: int = 1_000_000
-    """Максимальное значение решения."""
+    answer_max: int = 100
+    """Максимальное количество носителей в ответе."""
 
     def __init__(self, generate: bool = False):
         """Конструктор."""
@@ -301,62 +281,71 @@ class TaskImagesConversionBatchFindSavedSpace(Task):
     def __generate_raw(self) -> None:
         """Генерация задания без основной проверки."""
         from random import randint, choice
-        resolution_base: int = choice(self.resolution_base_multipliers)
-        resolution_multiplier: int = randint(self.resolution_multiplier_min, self.resolution_multiplier_max)
-        resolution_base *= resolution_multiplier
-        aspect_ratio: Tuple[int, int] = choice(self.aspect_ratios)
-        x = aspect_ratio[0] * resolution_base
-        y = aspect_ratio[1] * resolution_base
-        shrink_factor = randint(self.shrink_factor_min, self.shrink_factor_max)
-        self.resolution_final = (x, y)
-        self.resolution_initial = (x * shrink_factor, y * shrink_factor)
-        self.bit_depth_initial = randint(self.bit_depth_min, self.bit_depth_max)
-        self.bit_depth_final = randint(self.bit_depth_min, self.bit_depth_max)
-        self.files_in_batch = randint(self.files_in_batch_min, self.files_in_batch_max)
-
+        self.image_resolution = choice(self.image_resolutions)
+        self.image_bits_per_pixel = randint(self.image_bits_per_pixel_min, self.image_bits_per_pixel_max)
+        self.image_count = randint(self.image_count_min, self.image_count_max)
+        self.storage_size_gb = choice(self.storage_sizes_gb)
+        self.storage_size_bytes = self.storage_size_gb * GB_TO_MB * MB_TO_KB * BYTES_TO_KB
 
     def __generate(self) -> None:
         """Генерация задания с основной проверкой."""
         solution_ok = False
         while not solution_ok:
             self.__generate_raw()
-            solution_ok = True
-            solution_ok &= self.resolution_min <= self.resolution_initial[0] <= self.resolution_max
-            solution_ok &= self.resolution_min <= self.resolution_initial[1] <= self.resolution_max
-            solution_ok &= self.resolution_min <= self.resolution_final[0] <= self.resolution_max
-            solution_ok &= self.resolution_min <= self.resolution_final[1] <= self.resolution_max
-            solution_ok &= self.resolution_initial[0] > self.resolution_final[0]
-            solution_ok &= self.resolution_initial[1] > self.resolution_final[1]
-            solution_ok &= self.bit_depth_initial > self.bit_depth_final
             solution = self.solve()
-            solution_ok &= solution < self.solution_max
+            solution_ok = self.answer_min <= solution[0] <= self.answer_max
 
     def generate(self) -> None:
         """Генерация параметров условия."""
         self.__generate()
 
-    def solve(self) -> int:
+    def solve(self) -> Tuple[int, int]:
         """Решение задания."""
-        BITS_TO_BYTES = 8
-        BYTES_TO_KB = KB_TO_MB = 1024
-        resolution_initial = self.resolution_initial[0] * self.resolution_initial[1]
-        resolution_final = self.resolution_final[0] * self.resolution_final[1]
-        bit_depth_initial = self.bit_depth_initial
-        bit_depth_final = self.bit_depth_final
-        files_in_batch = self.files_in_batch
-        batch_size_initial = resolution_initial * bit_depth_initial * files_in_batch
-        batch_size_final = resolution_final * bit_depth_final * files_in_batch
-        batch_size_difference = batch_size_initial - batch_size_final
-        batch_size_difference_kb = batch_size_difference // (BITS_TO_BYTES * BYTES_TO_KB)
-        return batch_size_difference_kb
+        x, y = self.image_resolution
+        image_size_bits = x * y * self.image_bits_per_pixel
+        image_size_bytes = (image_size_bits + BITS_TO_BYTES - 1) // BITS_TO_BYTES
+        bytes_in_storage = self.storage_size_gb * GB_TO_MB * MB_TO_KB * BYTES_TO_KB
+        images_in_storage = bytes_in_storage // image_size_bytes
+        full_storages = self.image_count // images_in_storage
+        last_storage_images = self.image_count % images_in_storage
+        return full_storages + (0 if last_storage_images == 0 else 1), last_storage_images
+
+    def solution(self) -> str:
+        """Решение:"""
+        result = '1. Определим размер изображения в битах по формуле I = H * W * b, где:\n'
+        result += '   I - информационный объём изображения в битах,\n'
+        result += '   H - вертикальное разрешение изображения,\n'
+        result += '   W - горизонтальное разрешение изображения,\n'
+        result += '   b - число бит на пиксель (глубина цвета):\n'
+        x, y = self.image_resolution
+        image_size_bits = x * y * self.image_bits_per_pixel
+        result += f'   {x} * {y} * {self.image_bits_per_pixel} = {image_size_bits} (бит)\n'
+        result += '2. Переведём размер изображения в байтах:\n'
+        image_size_bytes = (image_size_bits + BITS_TO_BYTES - 1) // BITS_TO_BYTES
+        result += f'   {image_size_bits} : {BITS_TO_BYTES} = {image_size_bytes} (байт)\n'
+        result += '3. Определим размер носителя в байтах:\n'
+        bytes_in_storage = self.storage_size_gb * GB_TO_MB * MB_TO_KB * BYTES_TO_KB
+        result += f'   {self.storage_size_gb} * {GB_TO_MB} * {MB_TO_KB} * {BYTES_TO_KB} '
+        result += f'= {bytes_in_storage} (байт)\n'
+        result += '4. Определим количество изображений на носителе:\n'
+        images_in_storage = bytes_in_storage // image_size_bytes
+        result += f'   {bytes_in_storage} : {image_size_bytes} = {images_in_storage}\n'
+        full_storages = self.image_count // images_in_storage
+        last_storage_images = self.image_count % images_in_storage
+        if last_storage_images == 0:
+            result += f'5. Количество полных носителей: {full_storages}, на последнем носителе изображений нет.\n'
+            return result + f'Ответ: ({full_storages}, 0)'
+        else:
+            result += f'5. Количество полных носителей: {full_storages}, на последнем носителе изображений: '
+            result += f'{last_storage_images}.\n'
+            return result + f'Ответ: ({full_storages + 1}, {last_storage_images})'
 
     def __repr__(self) -> str:
         """Представление задания."""
-        result = f'Исходное разрешение: {self.resolution_initial[0]}x{self.resolution_initial[1]}, '
-        result += f'глубина цвета: {self.bit_depth_initial} бит/пиксель.\n'
-        result += f'Конечное разрешение: {self.resolution_final[0]}x{self.resolution_final[1]}, '
-        result += f'глубина цвета: {self.bit_depth_final} бит/пиксель.\n'
-        result += f'Количество файлов в пакете: {self.files_in_batch}.\n'
-        result += 'Определить разницу в информационном объёме пакета изображений. '
-        result += 'Результат округлять до ближайшего целого.'
+        result = f'Изображения: {self.image_resolution[0]}x{self.image_resolution[1]}, '
+        colors = 2 ** self.image_bits_per_pixel
+        result += f'{self.image_bits_per_pixel} {quantity_form(self.image_bits_per_pixel, ("бит", "бита", "бит"))} ({colors} {quantity_form(colors, ("цвет", "цвета", "цветов"))}). '
+        result += f'Количество изображений: {self.image_count}. '
+        result += f'Носитель: {self.storage_size_gb} Гб.\n'
+        result += 'Определить количество носителей и количество изображений на последнем носителе.'
         return result

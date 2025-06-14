@@ -1,11 +1,14 @@
 """Применение заданий: комбинаторика."""
 
-from subsequences import TaskCharSequenceTypeF
+from subsequences import TaskCharSequenceTypeG
 
-
-task = TaskCharSequenceTypeF(False)
-task.chunks = ('ABC', 'BCA', 'CAB')
-task.generate()
-print(task)
-print(task.solve())
-task.write_to_file('0400.txt')
+for file_number in range(401, 411):
+    file_name = f'{file_number:04}.txt'
+    solution_ok = False
+    while not solution_ok:
+        task = TaskCharSequenceTypeG(True)
+        solution1 = task.solve(method='regexp')
+        solution2 = task.solve(method='iteration')
+        solution_ok = solution1 == solution2
+        task.write_to_file(file_name)
+        print(f'{file_number:04}.txt: {task.parity_of_digit} {task.letter_for_count} {task.letter_count}: {solution1}')

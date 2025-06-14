@@ -1,4 +1,5 @@
 """Адресация в сети: IP-адреса."""
+from typing import List
 
 from task import Task
 from general import quantity_form
@@ -298,4 +299,69 @@ class TaskIPSubnetFindSubnetIfIPIsNotSpecial(Task):
         special_type = 'широковещательный адрес' if self.special_means_broadcast else 'адрес сети'
         result = f'Адрес {ip_to_str(self.ip_address)} в подсети - не {special_type}.\n'
         result += f'Определить максимальное количество двоичных единиц в маске подсети.\n'
+        return result
+
+class TaskIPSubnetFindSubnetsByBinaryOnesDivision(Task):
+    """Дан адрес хоста в сети (не адрес сети и не широковещательный).
+    Определить маски, задающие сети, в двоичном представлении адресов которых
+    количество единиц делится на K."""
+
+    ip_address: int = 0
+    """IP-адрес хоста."""
+
+    divisor_min: int = 2
+    """Минимальное значение делителя."""
+
+    divisor_max: int = 8
+    """Максимальное значение делителя."""
+
+    divisor: int = 5
+    """Значение делителя."""
+
+    min_mask_for_solution: int = 2
+    """Минимальное значение маски решения для генерации задания."""
+
+    max_mask_for_solution: int = 30
+    """Максимальное значение маски решения для генерации задания."""
+
+    def __init__(self, generate: bool = False):
+        """Конструктор."""
+        super().__init__(generate)
+        if generate:
+            self.generate()
+
+    def __generate_raw(self) -> None:
+        """Генерация задания без основной проверки."""
+        from random import randint
+        self.ip_address = randint(0, 0xFFFFFFFF)
+        self.divisor = randint(self.divisor_min, self.divisor_max)
+
+    def __generate(self) -> None:
+        """Генерация задания с основной проверкой."""
+        solution_ok = False
+        while not solution_ok:
+            self.__generate_raw()
+            solution = self.solve()
+            solution_ok = all(self.min_mask_for_solution <= mask <= self.max_mask_for_solution for mask in solution)
+
+    def generate(self) -> None:
+        """Генерация параметров условия."""
+        self.__generate()
+
+    def solve(self) -> List[int]:
+        """Решение задания."""
+        bin_ip = bin(self.ip_address)[2:].zfill(32)
+        ones_count = 0
+        masks = []
+        for i in range(32):
+            if bin_ip[i] == '1':
+                ones_count += 1
+            if ones_count > 0 and ones_count % self.divisor == 0:
+                masks.append(i + 1)
+        return masks
+
+    def __repr__(self) -> str:
+        """Представление задания."""
+        result = f'Хост с IP-адресом {ip_to_str(self.ip_address)} принадлежит некоторой сети.\n'
+        result += f'Определите маски таких сетей, что в их адресе число единиц делится на {self.divisor}.'
         return result
